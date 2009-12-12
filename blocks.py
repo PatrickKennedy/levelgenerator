@@ -369,7 +369,7 @@ if __name__ == "__main__":
 		#box = [Point(size/6, size/6) * scale, (Point(size-size/6, size-size/6) * scale)-1]
 		#canvas.rectangle(box, fill=colors[random.randint(0, 1)])
 		im = im.resize((size*10, size*10))
-		name = 'level2.png'
+		name = 'level.png'
 		logging.info("Saving to %s" % name)
 		im.save(name)
 
