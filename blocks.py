@@ -37,10 +37,33 @@ class Quad(object):
 	def __repr__(self):
 		return "Quad(%s)" % (self.rect,)
 
+	def attempt_tear_down(self):
+		"""Only tear_down if it would make sense. Safe to call whenever.
+
+		Return:
+			Boolean - True if the quad was successfully torn down.
+
+		"""
+		# THIS quad doesn't need to exist.
+		if not self.charges:
+			# But what about sub-quads?
+			if not [sub_quad for sub_quad in self.quads
+				if sub_quad and sub_quad.attempt_tear_down()]:
+				# All existing sub_quads are torn down so we're good to go.
+				return self.tear_down()
+
+		return False
+
 	def tear_down(self):
-		#print "--- Tearing down %s" % self
+		"""Tear down this quad.
+
+		Return:
+			Boolean - True if the quad was successfully torn down.
+
+		"""
+		logging.debug("-- Tearing down %s" % self)
 		self.parent.quads[self.parent.quads.index(self)] = None
-		del self
+		return True
 
 	@property
 	def root(self):
@@ -114,7 +137,7 @@ class Quad(object):
 		if matched is None:
 			matched = []
 
-		if exclusions and [rect <= exclusion for exclusion in exclusions]:
+		if exclusions and [rect in exclusion for exclusion in exclusions]:
 			logging.debug("Hit an exclusion at %s" % self)
 
 		# Append ourself if we are a matching quad.
@@ -187,8 +210,7 @@ class Block(object):
 			if rect is None or (rect and quad.rect in rect):
 				self.quads.remove(quad)
 				quad.charges.remove(self)
-				if not quad.charges:
-					quad.tear_down()
+				quad.attempt_tear_down()
 
 		if not self.quads and self.parent:
 			self.parent.children.discard(self)
