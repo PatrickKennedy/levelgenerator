@@ -7,6 +7,9 @@ from structs import Rect
 
 class VerificationQuad(blocks.Quad):
 	def __eq__(self, other):
+		if not isinstance(other, VerificationQuad):
+			return False
+
 		these_quads_match = (self.rect == other.rect)
 		if not these_quads_match:
 			logging.debug('Core Rect Mismatch: %s != %s' % (
@@ -59,6 +62,8 @@ class VerificationBlock(blocks.Block):
 		super(VerificationBlock, self).__init__(*args, **kwargs)
 
 	def __eq__(self, other):
+		if not isinstance(other, VerificationBlock):
+			return False
 		return self.block_id == other.block_id
 
 def test_single_layer():
@@ -105,5 +110,47 @@ def test_double_layer():
 	verification_tree.quads[3] = VerificationQuad(Rect(0, 2, 2, 2))
 	verification_tree.quads[3].quads[1] = VerificationQuad(Rect(1, 2, 1, 1))
 	verification_tree.quads[3].quads[1].charges.add(b2)
+
+	assert tree == verification_tree
+
+def test_double_layer_removal():
+	tree = VerificationQuad(Rect(0, 0, 4, 4))
+	block = VerificationBlock('b1', Rect(0, 0, 2, 2))
+	tree.charge(block)
+
+	block = VerificationBlock('b2', Rect(1, 1, 2, 2))
+	tree.charge(block)
+
+	block = VerificationBlock('b3', Rect(2, 2, 2, 2))
+	tree.charge(block)
+
+	block = VerificationBlock('b4', Rect(0, 3, 1, 1))
+	tree.charge(block)
+	block.tear_down()
+
+
+	b1 = VerificationBlock('b1', Rect(0, 0, 2, 2))
+	b2 = VerificationBlock('b2', Rect(1, 1, 2, 2))
+	b3 = VerificationBlock('b3', Rect(2, 2, 2, 2))
+	verification_tree = VerificationQuad(Rect(0, 0, 4, 4))
+	verification_tree.quads[0] = VerificationQuad(Rect(0, 0, 2, 2))
+	verification_tree.quads[0].charges.add(b1)
+	verification_tree.quads[0].quads[2] = VerificationQuad(Rect(1, 1, 1, 1))
+	verification_tree.quads[0].quads[2].charges.add(b2)
+
+	verification_tree.quads[1] = VerificationQuad(Rect(2, 0, 2, 2))
+	verification_tree.quads[1].quads[3] = VerificationQuad(Rect(2, 1, 1, 1))
+	verification_tree.quads[1].quads[3].charges.add(b2)
+
+	verification_tree.quads[2] = VerificationQuad(Rect(2, 2, 2, 2))
+	verification_tree.quads[2].charges.add(b3)
+	verification_tree.quads[2].quads[0] = VerificationQuad(Rect(2, 2, 1, 1))
+	verification_tree.quads[2].quads[0].charges.add(b2)
+
+	verification_tree.quads[3] = VerificationQuad(Rect(0, 2, 2, 2))
+	verification_tree.quads[3].quads[1] = VerificationQuad(Rect(1, 2, 1, 1))
+	verification_tree.quads[3].quads[1].charges.add(b2)
+
+	logging.debug('tree: %r, verification_tree: %r' % (tree, verification_tree))
 
 	assert tree == verification_tree
