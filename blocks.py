@@ -137,8 +137,11 @@ class Quad(object):
 		if matched is None:
 			matched = []
 
-		if exclusions and [rect in exclusion for exclusion in exclusions]:
-			logging.debug("Hit an exclusion at %s" % self)
+		if exclusions is None:
+			exclusions = []
+
+		if self._allocate_exclusions(rect, exclusions, matched):
+			pass
 
 		# Append ourself if we are a matching quad.
 		elif self.rect == rect:
@@ -147,14 +150,7 @@ class Quad(object):
 
 		# If the passed rect is smaller than and fully contained within this one
 		elif rect <= self.rect:
-			logging.debug("Subdividing %s" % rect)
-			shards = rect.fracture(self.rect.center)
-			self._assign_new_quads(shards)
-			#print shards, rect.pos_in(self.rect)
-			for pos, r in enumerate(shards):
-				if not r:
-					continue
-				self.quads[pos]._allocate(r, exclusions, matched)
+			self._subdivide(rect, exclusions, matched)
 
 		# If the given rect contains this rect
 		elif self.rect <= rect:
@@ -170,6 +166,35 @@ class Quad(object):
 			logging.debug("Failure")
 
 		return matched
+
+	def _allocate_exclusions(self, rect, exclusions, matched):
+		if not exclusions:
+			return False
+
+		# This rect is contained within a given exclusion so we move
+		# along and ignore this quad.
+		# TODO: Is attempting to tear down this quad enough clean up?
+		if [exclusion for exclusion in exclusions if self.rect <= exclusion]:
+				logging.debug("Hit an exclusion at %s with %s" % (self, rect))
+				self.attempt_tear_down()
+				return True
+
+		# There is an exclusion somewhere in the current rect so we need
+		# to find it and map around it.
+		elif rect <= self.rect and\
+				[exclusion for exclusion in exclusions if exclusion in self.rect]:
+				self._subdivide(rect, exclusions, matched)
+				return True
+
+	def _subdivide(self, rect, exclusions, matched):
+		logging.debug("Subdividing %s" % rect)
+		shards = rect.fracture(self.rect.center)
+		self._assign_new_quads(shards)
+		#print shards, rect.pos_in(self.rect)
+		for pos, r in enumerate(shards):
+				if not r:
+						continue
+				self.quads[pos]._allocate(r, exclusions, matched)
 
 class Block(object):
 	"""Base building block"""
