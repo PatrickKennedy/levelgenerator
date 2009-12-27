@@ -292,9 +292,13 @@ class Wall(Block):
 
 	def __init__(self, rect, parent=None, name='', abs=False, exclusions=None,
 				 thickness=1, **kwargs):
+		if exclusions is None:
+			exclusions = []
+		exclusions.append(rect)
+
 		rect = Rect(-thickness, -thickness,
-					rect.width+2*thickness,
-					rect.height+2*thickness)
+					rect.width+(2*thickness), # Compensate for the x/y moving
+					rect.height+(2*thickness))# backwards.
 		super(Wall, self).__init__(rect, parent, name, abs, exclusions,
 								   thickness=thickness, **kwargs)
 
