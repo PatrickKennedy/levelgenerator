@@ -4,11 +4,11 @@ import blocks
 from structs import Rect
 
 def test_valid_single_room():
-	tree = blocks.Quad(Rect(0, 0, 32, 32))
+	tree = blocks.Quad(Rect(0, 0, 8, 8))
 
-	room = blocks.Room(Rect(3, 3, 16, 7), name='cool_room')
+	room = blocks.Room(Rect(3, 3, 3, 2), name='cool_room')
 	tree.charge(room)
-	hits = tree.hit(Rect(3, 4, 5, 6))
+	hits = tree.hit(Rect(3, 3, 3, 2))
 	assert hits == set([room])
 
 def test_invalid_single_room():
